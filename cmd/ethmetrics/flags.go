@@ -3,6 +3,11 @@ package main
 import "github.com/urfave/cli/v2"
 
 var (
+	debugFlag = &cli.BoolFlag{
+		Name:    "debug",
+		Usage:   "Enable debug log",
+		EnvVars: []string{"DEBUG"},
+	}
 	rpcUrlFlag = &cli.StringFlag{
 		Name:    "rpc-url",
 		Usage:   "RPC url of geth node",

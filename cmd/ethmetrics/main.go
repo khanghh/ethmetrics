@@ -2,6 +2,9 @@ package main
 
 import (
 	"ethmetrics/internal/core"
+	"ethmetrics/internal/core/collector"
+	"ethmetrics/internal/logger"
+	"ethmetrics/internal/service"
 	"fmt"
 	"os"
 
@@ -15,6 +18,7 @@ var (
 
 	app   *cli.App
 	flags = []cli.Flag{
+		debugFlag,
 		rpcUrlFlag,
 		influxDbUrlFlag,
 		influxDbTokenFlag,
@@ -32,10 +36,24 @@ func init() {
 }
 
 func run(ctx *cli.Context) error {
+	debugEnabled := ctx.Bool(debugFlag.Name)
+	if debugEnabled {
+		logger.SetLogLevel(logger.LevelDebug)
+	}
 	rpcUrl := ctx.String(rpcUrlFlag.Name)
+	influxdbServerUrl := ctx.String(influxDbUrlFlag.Name)
+	influxdbToken := ctx.String(influxDbTokenFlag.Name)
+	influxdbOrg := ctx.String(influxDbOrgFlag.Name)
+	influxdbBucket := ctx.String(influxDbBucketFlag.Name)
+	influxdbPublisher := service.NewInfluxDBPublisher(influxdbServerUrl, influxdbToken, influxdbOrg, influxdbBucket)
 	engine := core.NewEthMetrics(core.MetricsOptions{
-		RpcUrl:     rpcUrl,
-		Publishers: []core.MetricsPublisher{},
+		RpcUrl: rpcUrl,
+		Collectors: []core.MetricsCollector{
+			&collector.BlockMetrics{},
+		},
+		Publishers: []core.MetricsPublisher{
+			influxdbPublisher,
+		},
 	})
 	return engine.Start(ctx.Context)
 }

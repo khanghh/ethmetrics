@@ -1,6 +1,8 @@
 package core
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/metrics"
 )
 
@@ -10,5 +12,5 @@ type MetricsCollector interface {
 }
 
 type MetricsPublisher interface {
-	PublishMetrics(registry metrics.Registry)
+	PublishMetrics(ctx context.Context, registry metrics.Registry)
 }

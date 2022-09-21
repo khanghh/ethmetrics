@@ -22,16 +22,20 @@ type Ctx struct {
 	Context      context.Context
 	CachedBlocks []*types.Block
 	LatestBlock  *types.Block
+	Registry     metrics.Registry
 }
 
 type EthMetrics struct {
 	MetricsOptions
 	Ctx
-	registry metrics.Registry
+}
+
+func init() {
+	metrics.Enabled = true
 }
 
 func (e *EthMetrics) Registry() metrics.Registry {
-	return e.registry
+	return e.Ctx.Registry
 }
 
 func (e *EthMetrics) collectMetrics(block *types.Block) {
@@ -47,7 +51,7 @@ func (e *EthMetrics) collectMetrics(block *types.Block) {
 
 func (e *EthMetrics) publishMetrics() {
 	for _, publisher := range e.Publishers {
-		publisher.PublishMetrics(e.registry)
+		publisher.PublishMetrics(e.Context, e.Registry())
 	}
 }
 
@@ -83,13 +87,9 @@ func (e *EthMetrics) Start(ctx context.Context) error {
 		return err
 	}
 	e.Ctx = Ctx{
-		Context: ctx,
-		Client:  client,
-	}
-	for _, collector := range e.Collectors {
-		if err := collector.Setup(&e.Ctx, e.registry); err != nil {
-			return err
-		}
+		Context:  ctx,
+		Client:   client,
+		Registry: metrics.NewRegistry(),
 	}
 	return e.collectOnNewHead()
 }
@@ -97,6 +97,5 @@ func (e *EthMetrics) Start(ctx context.Context) error {
 func NewEthMetrics(opts MetricsOptions) *EthMetrics {
 	return &EthMetrics{
 		MetricsOptions: opts,
-		registry:       metrics.NewRegistry(),
 	}
 }
