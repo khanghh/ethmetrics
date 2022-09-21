@@ -47,61 +47,59 @@ func SetLogLevel(level LogLevel) {
 	logLevel = level
 }
 
-func Printf(format string, args ...interface{}) {
+func Printf(format string, v ...any) {
 	log.SetPrefix(ColorWhite)
-	log.Print(prefixInfo+spaceElem, fmt.Sprintf(format, args...))
+	log.Print(prefixInfo+spaceElem, fmt.Sprintf(format, v...))
 }
 
 func Println(v ...any) {
 	log.SetPrefix(ColorWhite)
-	log.Print(prefixInfo, fmt.Sprintln(v...))
+	log.Println(prefixInfo, fmt.Sprint(v...))
 }
 
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, v ...any) {
 	if logLevel >= LevelDebug {
 		log.SetPrefix(ColorGray)
-		log.Print(prefixDebug+spaceElem, fmt.Sprintf(format, args...))
+		log.Print(prefixDebug+spaceElem, fmt.Sprintf(format, v...))
 	}
 }
 
-func Debugln(msg string) {
+func Debugln(v ...any) {
 	if logLevel >= LevelDebug {
 		log.SetPrefix(ColorGray)
-		log.Println(prefixDebug, msg)
+		log.Println(prefixDebug, fmt.Sprint(v...))
 	}
 }
 
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, v ...any) {
 	if logLevel >= LevelWarning {
 		log.SetPrefix(ColorYellow)
+		log.Print(prefixWarning+spaceElem, fmt.Sprintf(format, v...))
+	}
+}
+
+func Warnln(v ...any) {
+	if logLevel >= LevelWarning {
+		log.SetPrefix(ColorYellow)
+		log.Println(prefixWarning, fmt.Sprint(v...))
+	}
+}
+
+func Errorln(v ...any) {
+	if logLevel >= LevelError {
+		log.SetPrefix(ColorRed)
+		log.Println(prefixError, fmt.Sprint(v...))
+	}
+}
+
+func Errorf(format string, args ...any) {
+	if logLevel >= LevelError {
+		log.SetPrefix(ColorRed)
 		log.Print(prefixWarning+spaceElem, fmt.Sprintf(format, args...))
 	}
 }
 
-func Warnln(msg string) {
-	if logLevel >= LevelWarning {
-		log.SetPrefix(ColorYellow)
-		log.Println(prefixWarning, msg)
-	}
-}
-
-func Errorln(v ...interface{}) {
-	if logLevel >= LevelError {
-		log.SetPrefix(ColorRed)
-		v = append([]interface{}{prefixError}, v...)
-		log.Println(v...)
-	}
-}
-
-func Errorf(format string, args ...interface{}) {
-	if logLevel >= LevelError {
-		log.SetPrefix(ColorRed)
-		log.Print(prefixWarning+spaceElem, fmt.Sprintf(format, args...))
-	}
-}
-
-func Fatalln(v ...interface{}) {
+func Fatalln(v ...any) {
 	log.SetPrefix(ColorRed)
-	v = append([]interface{}{prefixError}, v...)
-	log.Fatalln(v...)
+	log.Fatalln(prefixError+spaceElem, fmt.Sprint(v...))
 }
