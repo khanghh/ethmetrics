@@ -7,6 +7,7 @@ import (
 	"ethmetrics/internal/service"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/urfave/cli/v2"
@@ -24,6 +25,7 @@ var (
 		influxDbTokenFlag,
 		influxDbOrgFlag,
 		influxDbBucketFlag,
+		influxDbTagsFlag,
 	}
 )
 
@@ -33,6 +35,23 @@ func init() {
 	app.Usage = "Ethereum metrics collector"
 	app.Flags = append(app.Flags, flags...)
 	app.Action = run
+}
+
+func splitTagsFlag(tagsFlag string) map[string]string {
+	tags := strings.Split(tagsFlag, ",")
+	tagsMap := map[string]string{}
+
+	for _, t := range tags {
+		if t != "" {
+			kv := strings.Split(t, "=")
+
+			if len(kv) == 2 {
+				tagsMap[kv[0]] = kv[1]
+			}
+		}
+	}
+
+	return tagsMap
 }
 
 func run(ctx *cli.Context) error {
@@ -45,7 +64,8 @@ func run(ctx *cli.Context) error {
 	influxdbToken := ctx.String(influxDbTokenFlag.Name)
 	influxdbOrg := ctx.String(influxDbOrgFlag.Name)
 	influxdbBucket := ctx.String(influxDbBucketFlag.Name)
-	influxdbPublisher := service.NewInfluxDBPublisher(influxdbServerUrl, influxdbToken, influxdbOrg, influxdbBucket)
+	influxdbTags := splitTagsFlag(ctx.String(influxDbTagsFlag.Name))
+	influxdbPublisher := service.NewInfluxDBPublisher(influxdbServerUrl, influxdbToken, influxdbOrg, influxdbBucket, influxdbTags)
 	engine := core.NewEthMetrics(core.MetricsOptions{
 		RpcUrl: rpcUrl,
 		Collectors: []core.MetricsCollector{
