@@ -16,7 +16,7 @@ var (
 	}
 	influxDbUrlFlag = &cli.StringFlag{
 		Name:    "influxdb.url",
-		Usage:   "InfluxDB API url to push metrics data to",
+		Usage:   "InfluxDB API url to push metrics to",
 		Value:   "http://localhost:8086",
 		EnvVars: []string{"INFLUXDB_URL"},
 	}
@@ -33,7 +33,7 @@ var (
 	}
 	influxDbBucketFlag = &cli.StringFlag{
 		Name:    "influxdb.bucket",
-		Usage:   "InfluxDB bucket to push metrics data to",
+		Usage:   "InfluxDB bucket to push metrics to",
 		Value:   "geth",
 		EnvVars: []string{"INFLUXDB_BUCKET"},
 	}

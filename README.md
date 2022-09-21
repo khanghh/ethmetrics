@@ -1,6 +1,6 @@
 # ethmetrics
 
-Service to collect various metrics data from an Ethereum nodes and publish to metrics collector services (e.g. influxdb, prometheus).
+Service to collect various metrics from an Ethereum nodes and publish to monitoring services (e.g. influxdb, prometheus).
 
 ## Usage
 
