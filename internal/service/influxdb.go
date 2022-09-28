@@ -127,7 +127,7 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 	for _, pt := range pts {
 		err := p.writeAPI.WritePoint(ctx, pt)
 		if err != nil {
-			logger.Errorf("Failed to publish metrics to influxdb", err)
+			logger.Errorf("Failed to publish metrics to influxdb, measurement: %s, error: %v", pt.Name(), err)
 			return
 		}
 	}

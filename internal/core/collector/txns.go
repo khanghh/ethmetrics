@@ -2,7 +2,6 @@ package collector
 
 import (
 	"ethmetrics/internal/core"
-	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/metrics"
@@ -23,13 +22,12 @@ func (m *TxnsMetrics) calculateTps(blocks []*types.Block) float64 {
 	for _, block := range blocks {
 		totalTxns += block.Transactions().Len()
 	}
-	startTime := blocks[0].ReceivedAt
-	duration := blocks[len(blocks)-1].ReceivedAt.Sub(startTime)
-	return float64(totalTxns) / float64(duration/time.Second)
+	duration := blocks[len(blocks)-1].Time() - blocks[0].Time()
+	return float64(totalTxns) / float64(duration)
 }
 
 func (m *TxnsMetrics) Collect(ctx *core.Ctx) {
-	// TODO: add more tps measurement
+	// TODO: add more block ranges tps measurement
 	tpsAvg100Gauge := metrics.GetOrRegisterGaugeFloat64("eth/txns/tps.avg100", ctx.Registry)
 	tpsAvg100Gauge.Update(m.calculateTps(ctx.CachedBlocks))
 }
