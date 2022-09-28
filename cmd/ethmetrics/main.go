@@ -71,6 +71,7 @@ func run(ctx *cli.Context) error {
 		MaxCachedBlock: 100,
 		Collectors: []core.MetricsCollector{
 			&collector.BlockMetrics{},
+			&collector.TxnsMetrics{},
 		},
 		Publishers: []core.MetricsPublisher{
 			influxdbPublisher,
