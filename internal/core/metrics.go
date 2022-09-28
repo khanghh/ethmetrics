@@ -80,7 +80,7 @@ func (e *EthMetrics) collectOnNewHead() error {
 }
 
 func (e *EthMetrics) Start(ctx context.Context) error {
-	logger.Println("Dialing RPC node", e.RpcUrl)
+	logger.Println("Dialing RPC node ", e.RpcUrl)
 	client, err := rpc.DialContext(ctx, e.RpcUrl)
 	if err != nil {
 		logger.Errorln("Failed to dial rpc node", e.RpcUrl, err)

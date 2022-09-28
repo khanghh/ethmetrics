@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"ethmetrics/internal/logger"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/metrics"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
 
 type InfluxDBPublisher struct {
@@ -27,6 +29,7 @@ func parseName(name string) (string, string) {
 
 func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Registry) {
 	now := time.Now()
+	pts := []*write.Point{}
 	reg.Each(func(name string, i interface{}) {
 		measurementName, fieldName := parseName(name)
 		if fieldName == "" {
@@ -37,22 +40,19 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 			fields := map[string]interface{}{
 				fieldName: metric.Count(),
 			}
-			pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-			p.writeAPI.WritePoint(ctx, pt)
+			pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 		case metrics.Gauge:
 			ms := metric.Snapshot()
 			fields := map[string]interface{}{
 				fieldName: ms.Value(),
 			}
-			pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-			p.writeAPI.WritePoint(ctx, pt)
+			pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 		case metrics.GaugeFloat64:
 			ms := metric.Snapshot()
 			fields := map[string]interface{}{
 				fieldName: ms.Value(),
 			}
-			pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-			p.writeAPI.WritePoint(ctx, pt)
+			pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 		case metrics.Histogram:
 			ms := metric.Snapshot()
 			if ms.Count() > 0 {
@@ -71,8 +71,7 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 					"p999":     ps[4],
 					"p9999":    ps[5],
 				}
-				pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-				p.writeAPI.WritePoint(ctx, pt)
+				pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 			}
 		case metrics.Meter:
 			ms := metric.Snapshot()
@@ -106,8 +105,7 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 				"m15":      ms.Rate15(),
 				"meanrate": ms.RateMean(),
 			}
-			pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-			p.writeAPI.WritePoint(ctx, pt)
+			pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 		case metrics.ResettingTimer:
 			t := metric.Snapshot()
 			if len(t.Values()) > 0 {
@@ -122,12 +120,17 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 					"p95":   ps[1],
 					"p99":   ps[2],
 				}
-				pt := influxdb2.NewPoint(measurementName, p.Tags, fields, now)
-				p.writeAPI.WritePoint(ctx, pt)
+				pts = append(pts, influxdb2.NewPoint(measurementName, p.Tags, fields, now))
 			}
 		}
 	})
-	p.writeAPI.Flush(ctx)
+	for _, pt := range pts {
+		err := p.writeAPI.WritePoint(ctx, pt)
+		if err != nil {
+			logger.Errorf("Failed to publish metrics to influxdb", err)
+			return
+		}
+	}
 }
 
 func NewInfluxDBPublisher(serverURL, authToken, org, bucket string, tags map[string]string) *InfluxDBPublisher {
