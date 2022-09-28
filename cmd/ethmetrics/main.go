@@ -67,7 +67,8 @@ func run(ctx *cli.Context) error {
 	influxdbTags := splitTagsFlag(ctx.String(influxDbTagsFlag.Name))
 	influxdbPublisher := service.NewInfluxDBPublisher(influxdbServerUrl, influxdbToken, influxdbOrg, influxdbBucket, influxdbTags)
 	engine := core.NewEthMetrics(core.MetricsOptions{
-		RpcUrl: rpcUrl,
+		RpcUrl:         rpcUrl,
+		MaxCachedBlock: 100,
 		Collectors: []core.MetricsCollector{
 			&collector.BlockMetrics{},
 		},

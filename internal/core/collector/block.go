@@ -10,11 +10,11 @@ import (
 type BlockMetrics struct {
 }
 
-func (c *BlockMetrics) Setup(ctx *core.Ctx, registry metrics.Registry) error {
+func (m *BlockMetrics) Setup(ctx *core.Ctx, registry metrics.Registry) error {
 	return nil
 }
 
-func (c *BlockMetrics) Collect(ctx *core.Ctx) {
+func (m *BlockMetrics) Collect(ctx *core.Ctx) {
 	blockHeadGauge := metrics.GetOrRegisterGauge("eth/block.number", ctx.Registry)
 	blockSizeGauge := metrics.GetOrRegisterGaugeFloat64("eth/block.size", ctx.Registry)
 	blockGasUsedGauge := metrics.GetOrRegisterGauge("eth/block.gasused", ctx.Registry)
@@ -26,5 +26,5 @@ func (c *BlockMetrics) Collect(ctx *core.Ctx) {
 	blockGasUsedGauge.Update(int64(ctx.LatestBlock.GasUsed()))
 	blockGasLimitGauge.Update(int64(ctx.LatestBlock.GasLimit()))
 	blockTxnCountGauge.Update(int64(ctx.LatestBlock.Transactions().Len()))
-	logger.Debugf("Receive new block #%d\n", ctx.LatestBlock.NumberU64())
+	logger.Debugf("Receive new block #%d with %d transactions\n", ctx.LatestBlock.NumberU64(), ctx.LatestBlock.Transactions().Len())
 }
