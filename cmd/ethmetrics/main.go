@@ -68,10 +68,10 @@ func run(ctx *cli.Context) error {
 	influxdbPublisher := service.NewInfluxDBPublisher(influxdbServerUrl, influxdbToken, influxdbOrg, influxdbBucket, influxdbTags)
 	engine := core.NewEthMetrics(core.MetricsOptions{
 		RpcUrl:         rpcUrl,
-		MaxCachedBlock: 100,
+		MaxCachedBlock: 200,
 		Collectors: []core.MetricsCollector{
 			&collector.BlockMetrics{},
-			&collector.TxnsMetrics{},
+			&collector.TxsMetrics{},
 		},
 		Publishers: []core.MetricsPublisher{
 			influxdbPublisher,

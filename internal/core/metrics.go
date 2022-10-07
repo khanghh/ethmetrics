@@ -21,7 +21,7 @@ type Ctx struct {
 	Client       *rpc.Client
 	Context      context.Context
 	CachedBlocks []*types.Block
-	LatestBlock  *types.Block
+	Head         *types.Header
 	Registry     metrics.Registry
 }
 
@@ -39,11 +39,6 @@ func (e *EthMetrics) Registry() metrics.Registry {
 }
 
 func (e *EthMetrics) collectMetrics(block *types.Block) {
-	e.LatestBlock = block
-	e.CachedBlocks = append(e.CachedBlocks, block)
-	if len(e.CachedBlocks) > e.MaxCachedBlock {
-		e.CachedBlocks = e.CachedBlocks[1:]
-	}
 	for _, collector := range e.Collectors {
 		collector.Collect(&e.Ctx)
 	}
@@ -55,26 +50,35 @@ func (e *EthMetrics) publishMetrics() {
 	}
 }
 
-func (e *EthMetrics) collectOnNewHead() error {
+func (e *EthMetrics) cacheBlock(block *types.Block) {
+	e.CachedBlocks = append(e.CachedBlocks, block)
+	if len(e.CachedBlocks) > e.MaxCachedBlock {
+		e.CachedBlocks = e.CachedBlocks[1:]
+	}
+}
+
+func (e *EthMetrics) collectOnNewHead(ctx context.Context) error {
 	client := ethclient.NewClient(e.Client)
-	headCh := make(chan *types.Header)
-	subs, err := client.SubscribeNewHead(e.Context, headCh)
+	newHeadCh := make(chan *types.Header)
+	newHeadSub, err := client.SubscribeNewHead(e.Context, newHeadCh)
 	if err != nil {
 		return err
 	}
 	for {
 		select {
-		case head := <-headCh:
-			block, err := client.BlockByNumber(e.Context, head.Number)
+		case head := <-newHeadCh:
+			block, err := client.BlockByNumber(ctx, head.Number)
 			if err != nil {
 				return err
 			}
+			e.Head = head
+			e.cacheBlock(block)
 			e.collectMetrics(block)
 			e.publishMetrics()
-		case err := <-subs.Err():
+		case err := <-newHeadSub.Err():
 			return err
-		case <-e.Context.Done():
-			return e.Context.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 }
@@ -91,7 +95,7 @@ func (e *EthMetrics) Start(ctx context.Context) error {
 		Client:   client,
 		Registry: metrics.NewRegistry(),
 	}
-	return e.collectOnNewHead()
+	return e.collectOnNewHead(ctx)
 }
 
 func NewEthMetrics(opts MetricsOptions) *EthMetrics {

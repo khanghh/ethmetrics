@@ -131,6 +131,10 @@ func (p *InfluxDBPublisher) PublishMetrics(ctx context.Context, reg metrics.Regi
 			return
 		}
 	}
+	err := p.writeAPI.Flush(ctx)
+	if err != nil {
+		logger.Errorln(err)
+	}
 }
 
 func NewInfluxDBPublisher(serverURL, authToken, org, bucket string, tags map[string]string) *InfluxDBPublisher {
