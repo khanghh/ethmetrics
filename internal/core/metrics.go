@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"ethmetrics/internal/logger"
+	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -67,6 +68,7 @@ func (e *EthMetrics) collectOnNewHead(ctx context.Context) error {
 	for {
 		select {
 		case head := <-newHeadCh:
+			startTime := time.Now()
 			block, err := client.BlockByNumber(ctx, head.Number)
 			if err != nil {
 				return err
@@ -75,6 +77,10 @@ func (e *EthMetrics) collectOnNewHead(ctx context.Context) error {
 			e.cacheBlock(block)
 			e.collectMetrics(block)
 			e.publishMetrics()
+			elapsed := time.Since(startTime)
+			if elapsed > 1*time.Second {
+				logger.Warnf("Process block #%d took %v")
+			}
 		case err := <-newHeadSub.Err():
 			return err
 		case <-ctx.Done():
