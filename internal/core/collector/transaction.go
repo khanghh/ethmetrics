@@ -34,4 +34,6 @@ func (m *TxsMetrics) Collect(ctx *core.Ctx) {
 	cachedBlocks := ctx.Storage["block"].([]*core.Block)
 	tpsAvg100Gauge := metrics.GetOrRegisterGaugeFloat64("eth/txs/tps.avg100", ctx.Registry)
 	tpsAvg100Gauge.Update(m.calculateTps(cachedBlocks, 100))
+	tpsAvg3600Gauge := metrics.GetOrRegisterGaugeFloat64("eth/txs/tps.avg3600", ctx.Registry)
+	tpsAvg3600Gauge.Update(m.calculateTps(cachedBlocks, 3600))
 }

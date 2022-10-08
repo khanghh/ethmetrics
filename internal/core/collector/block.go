@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	maxCachedBlock = 200
+	maxCachedBlock = 4000
 )
 
 type BlockMetrics struct {
